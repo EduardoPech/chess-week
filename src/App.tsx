@@ -8,7 +8,7 @@ function App() {
 
   return (
     <>
-      <div>
+      <div className='flex flex-row items-center justify-center'>
         <a href="https://electron-vite.github.io" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
         </a>
@@ -16,9 +16,9 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
+      <h1 className='text-2xl font-bold'>Vite + React</h1>
+      <div className="flex flex-col items-center justify-center">
+        <button className='bg-blue-500 text-white p-2 rounded-md' onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
         <p>
