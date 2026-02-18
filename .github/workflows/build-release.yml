@@ -1,0 +1,85 @@
+name: Build Release
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}
+          path: release/
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*'
+          merge-multiple: true
+
+      - name: Get version and tag info
+        id: vars
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "update_existing=false" >> $GITHUB_OUTPUT
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+            echo "update_existing=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create/Update Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: Chess Week v${{ steps.vars.outputs.version }}
+          body: |
+            ## Chess Week Synchronizer
+
+            Built from ${{ github.sha }}
+
+            ### Downloads
+            - **macOS:** ChessWeek-Mac-${{ steps.vars.outputs.version }}-Installer.dmg
+            - **Windows:** ChessWeek-Windows-${{ steps.vars.outputs.version }}-Setup.exe
+            - **Linux:** ChessWeek-Linux-${{ steps.vars.outputs.version }}.AppImage
+          files: |
+            release/${{ steps.vars.outputs.version }}/*
+          update_existing_release: ${{ steps.vars.outputs.update_existing == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
