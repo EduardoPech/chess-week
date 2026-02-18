@@ -13,6 +13,7 @@ import type { Twic } from './types'
 import { FolderSync } from 'lucide-react'
 import Loading from './components/Loading'
 import { Progress } from './components/ui/progress'
+import Logo from './assets/icon.png'
 
 function App() {
   const [isDownloading, setIsDownloading] = useState(false)
@@ -61,6 +62,9 @@ function App() {
 
   return (
       <div className="container mx-auto py-5">
+        <div className="flex flex-col items-center justify-center">
+          <img src={Logo} alt="Chess Week Synchronizer" className="w-20 h-20" />
+        </div>
         <h1 className="text-2xl font-bold">
           Chess Week Synchronizer
         </h1>

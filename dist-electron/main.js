@@ -1,79 +1,52 @@
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-import fs from "node:fs";
-const TWIC_BASE_URL = "https://theweekinchess.com";
-const getTwicDownloadUrl = (week) => `${TWIC_BASE_URL}/zips/twic${week}g.zip`;
-const getTwicZipFilename = (week) => `twic${week}g.zip`;
-const TWIC_ZIP_REGEX = /twic\d+g\.zip/;
-const IPC_CHANNELS = {
+import { app as s, BrowserWindow as w, ipcMain as c, dialog as m } from "electron";
+import { fileURLToPath as R } from "node:url";
+import e from "node:path";
+import _ from "node:fs";
+const D = "https://theweekinchess.com", I = (o) => `${D}/zips/twic${o}g.zip`, O = (o) => `twic${o}g.zip`, P = /twic\d+g\.zip/, p = {
   SELECT_DIRECTORY: "select-directory",
   DOWNLOAD_TWIC: "download-selected-twic-number",
   GET_DOWNLOADED_TWICS: "get-downloaded-twic-numbers"
-};
-const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
-process.env.APP_ROOT = path.join(__dirname$1, "..");
-const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
-const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
-const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
-let win;
-function createWindow() {
-  win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+}, E = e.dirname(R(import.meta.url));
+process.env.APP_ROOT = e.join(E, "..");
+const l = process.env.VITE_DEV_SERVER_URL, S = e.join(process.env.APP_ROOT, "dist-electron"), T = e.join(process.env.APP_ROOT, "dist");
+process.env.VITE_PUBLIC = l ? e.join(process.env.APP_ROOT, "public") : T;
+let t;
+function f() {
+  t = new w({
+    icon: e.join(process.env.VITE_PUBLIC, "icon.png"),
     webPreferences: {
-      preload: path.join(__dirname$1, "preload.mjs")
+      preload: e.join(E, "preload.mjs")
     },
     width: 1200,
     height: 800
-  });
-  win.webContents.on("did-finish-load", () => {
-    win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
-  });
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL);
-  } else {
-    win.loadFile(path.join(RENDERER_DIST, "index.html"));
-  }
+  }), t.webContents.on("did-finish-load", () => {
+    t == null || t.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+  }), l ? t.loadURL(l) : t.loadFile(e.join(T, "index.html"));
 }
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-    win = null;
-  }
+s.on("window-all-closed", () => {
+  process.platform !== "darwin" && (s.quit(), t = null);
 });
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+s.on("activate", () => {
+  w.getAllWindows().length === 0 && f();
 });
-ipcMain.handle("scraper:fetch-url", async (_event, url) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
-  return res.text();
+c.handle("scraper:fetch-url", async (o, n) => {
+  const i = await fetch(n);
+  if (!i.ok) throw new Error(`HTTP ${i.status}: ${n}`);
+  return i.text();
 });
-ipcMain.handle(IPC_CHANNELS.SELECT_DIRECTORY, async (_event) => {
-  const dir = await dialog.showOpenDialog({
-    properties: ["openDirectory"]
-  });
-  return dir.filePaths[0];
+c.handle(p.SELECT_DIRECTORY, async (o) => (await m.showOpenDialog({
+  properties: ["openDirectory"]
+})).filePaths[0]);
+c.handle(p.DOWNLOAD_TWIC, async (o, n, i) => {
+  const r = I(n), a = await fetch(r);
+  if (!a.ok) throw new Error(`HTTP ${a.status}: ${r}`);
+  const h = await a.arrayBuffer(), d = e.join(i, O(n));
+  return _.writeFileSync(d, Buffer.from(h)), d;
 });
-ipcMain.handle(IPC_CHANNELS.DOWNLOAD_TWIC, async (_event, twicNumber, dir) => {
-  const url = getTwicDownloadUrl(twicNumber);
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
-  const zip = await res.arrayBuffer();
-  const zipPath = path.join(dir, getTwicZipFilename(twicNumber));
-  fs.writeFileSync(zipPath, Buffer.from(zip));
-  return zipPath;
-});
-ipcMain.handle(IPC_CHANNELS.GET_DOWNLOADED_TWICS, async (_event, dir) => {
-  const files = fs.readdirSync(dir);
-  return files.filter((file) => file.match(TWIC_ZIP_REGEX)).map((file) => file.replace("twic", "").replace("g.zip", ""));
-});
-app.whenReady().then(createWindow);
+c.handle(p.GET_DOWNLOADED_TWICS, async (o, n) => _.readdirSync(n).filter((r) => r.match(P)).map((r) => r.replace("twic", "").replace("g.zip", "")));
+s.whenReady().then(f);
 export {
-  MAIN_DIST,
-  RENDERER_DIST,
-  VITE_DEV_SERVER_URL
+  S as MAIN_DIST,
+  T as RENDERER_DIST,
+  l as VITE_DEV_SERVER_URL
 };
