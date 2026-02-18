@@ -27,12 +27,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Configure Windows for electron-builder
-        if: runner.os == 'Windows'
-        run: |
-          Remove-Item -Recurse -Force "$env:LOCALAPPDATA\electron-builder\Cache" -ErrorAction SilentlyContinue
-          Add-MpPreference -ExclusionPath "$env:LOCALAPPDATA\electron-builder\Cache"
-
       - name: Build app
         run: npm run build
         env:
