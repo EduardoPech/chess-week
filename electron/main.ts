@@ -1,7 +1,8 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import fs from 'node:fs'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -32,6 +33,8 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
+    width: 1200,
+    height: 800,
   })
 
   // Test active push message to Renderer-process.
@@ -63,6 +66,38 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow()
   }
+})
+
+// Fetch URL from main process (no CORS)
+ipcMain.handle('scraper:fetch-url', async (_event, url: string) => {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`)
+  return res.text()
+})
+
+// Select directory
+ipcMain.handle('select-directory', async (_event) => {
+  const dir = await dialog.showOpenDialog({
+    properties: ['openDirectory']
+  })
+  return dir.filePaths[0]
+})
+
+// Download selected TWIC number
+ipcMain.handle('download-selected-twic-number', async (_event, twicNumber: number, dir: string) => {
+  const url = `https://theweekinchess.com/zips/twic${twicNumber}g.zip`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`)
+  const zip = await res.arrayBuffer()
+  const zipPath = path.join(dir, `twic${twicNumber}g.zip`)
+  fs.writeFileSync(zipPath, Buffer.from(zip))
+  return zipPath
+})
+
+// Return a list of twic numbers that are already downloaded
+ipcMain.handle('get-downloaded-twic-numbers', async (_event, dir: string) => {
+  const files = fs.readdirSync(dir)
+  return files.filter((file) => file.match(/twic\d+g\.zip/)).map((file) => file.replace('twic', '').replace('g.zip', ''))
 })
 
 app.whenReady().then(createWindow)

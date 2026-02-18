@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
     return ipcRenderer.invoke(channel, ...omit)
   },
 
-  // You can expose other APTs you need here.
-  // ...
+  sendSync(...args: Parameters<typeof ipcRenderer.sendSync>) {
+    const [channel, ...omit] = args
+    return ipcRenderer.sendSync(channel, ...omit)
+  },
 })
