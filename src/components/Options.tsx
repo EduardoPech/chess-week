@@ -1,18 +1,17 @@
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
 import { Button } from "./ui/button"
-import {
-  FolderPlus
-} from "lucide-react"
+import { FolderPlus } from "lucide-react"
+import { IPC_CHANNELS } from "@/constants"
 
 interface OptionsPanelProps {
-    directory: string;
-    setDirectory: (dir: string) => void;
+  directory: string
+  setDirectory: (dir: string) => void
 }
 
 export default function OptionsPanel({ directory, setDirectory }: OptionsPanelProps) {
   const onDirectoryChange = async () => {
-    const dir = await window.ipcRenderer.invoke('select-directory') as string
+    const dir = (await window.ipcRenderer.invoke(IPC_CHANNELS.SELECT_DIRECTORY)) as string
     setDirectory(dir)
   }
 
@@ -32,4 +31,4 @@ export default function OptionsPanel({ directory, setDirectory }: OptionsPanelPr
       </div>
     </div>
   )
-};
+}

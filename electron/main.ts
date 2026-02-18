@@ -1,10 +1,14 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
-import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
+import {
+  getTwicDownloadUrl,
+  getTwicZipFilename,
+  IPC_CHANNELS,
+  TWIC_ZIP_REGEX,
+} from '../src/constants'
 
-const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // The built directory structure
@@ -76,7 +80,7 @@ ipcMain.handle('scraper:fetch-url', async (_event, url: string) => {
 })
 
 // Select directory
-ipcMain.handle('select-directory', async (_event) => {
+ipcMain.handle(IPC_CHANNELS.SELECT_DIRECTORY, async (_event) => {
   const dir = await dialog.showOpenDialog({
     properties: ['openDirectory']
   })
@@ -84,20 +88,22 @@ ipcMain.handle('select-directory', async (_event) => {
 })
 
 // Download selected TWIC number
-ipcMain.handle('download-selected-twic-number', async (_event, twicNumber: number, dir: string) => {
-  const url = `https://theweekinchess.com/zips/twic${twicNumber}g.zip`
+ipcMain.handle(IPC_CHANNELS.DOWNLOAD_TWIC, async (_event, twicNumber: number, dir: string) => {
+  const url = getTwicDownloadUrl(twicNumber)
   const res = await fetch(url)
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`)
   const zip = await res.arrayBuffer()
-  const zipPath = path.join(dir, `twic${twicNumber}g.zip`)
+  const zipPath = path.join(dir, getTwicZipFilename(twicNumber))
   fs.writeFileSync(zipPath, Buffer.from(zip))
   return zipPath
 })
 
 // Return a list of twic numbers that are already downloaded
-ipcMain.handle('get-downloaded-twic-numbers', async (_event, dir: string) => {
+ipcMain.handle(IPC_CHANNELS.GET_DOWNLOADED_TWICS, async (_event, dir: string) => {
   const files = fs.readdirSync(dir)
-  return files.filter((file) => file.match(/twic\d+g\.zip/)).map((file) => file.replace('twic', '').replace('g.zip', ''))
+  return files
+    .filter((file) => file.match(TWIC_ZIP_REGEX))
+    .map((file) => file.replace('twic', '').replace('g.zip', ''))
 })
 
 app.whenReady().then(createWindow)

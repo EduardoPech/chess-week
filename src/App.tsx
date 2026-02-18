@@ -26,20 +26,12 @@ function App() {
     [twics, rowSelection]
   )
   const [downloadedTwicNumbers, setDownloadedTwicNumbers] = useState<string[]>([])
-  const getUrlStatuses = async () => {
-    const listOfTwics = await getTwics()
-    const listOfDownloadedTwicNumbers = await getDownloadedTwicNumbers(directory)
-    setDownloadedTwicNumbers(listOfDownloadedTwicNumbers)
-    const twicsNotDownloaded = listOfTwics.filter((twic) => !listOfDownloadedTwicNumbers.includes(twic.week.toString()))
-    return twicsNotDownloaded
-  }
 
   const downloadSelectedTwics = async () => {
     setIsDownloading(true)
     setDownloadProgress(0)
     for (const twic of selectedTwics) {
       const zipPath = await downloadSelectedTwicNumber(twic.week, directory)
-      // zipPach example: /Users/eduardopech/Desktop/twics/twic1628g.zip
       if (zipPath) {
         setDownloadedTwicNumbers((prev) => [...prev, twic.week.toString()])
         setTwics((prev) => prev.filter((t) => t.week !== twic.week))
@@ -51,18 +43,20 @@ function App() {
   }
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (!directory) return
+
+    const loadData = async () => {
       setIsLoading(true)
       setRowSelection({})
-      const urlStatuses = await getUrlStatuses()
-      const downloadedTwics = await getDownloadedTwicNumbers( directory )
-      setTwics(urlStatuses)
-      setDownloadedTwicNumbers(downloadedTwics)
+      const [allTwics, downloadedNumbers] = await Promise.all([
+        getTwics(),
+        getDownloadedTwicNumbers(directory),
+      ])
+      setDownloadedTwicNumbers(downloadedNumbers)
+      setTwics(allTwics.filter((twic) => !downloadedNumbers.includes(twic.week.toString())))
       setIsLoading(false)
     }
-    if (directory) {
-      fetchData()
-    }
+    loadData()
   }, [directory])
 
   return (

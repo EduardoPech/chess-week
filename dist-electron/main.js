@@ -1,9 +1,16 @@
 import { app, BrowserWindow, ipcMain, dialog } from "electron";
-import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
-createRequire(import.meta.url);
+const TWIC_BASE_URL = "https://theweekinchess.com";
+const getTwicDownloadUrl = (week) => `${TWIC_BASE_URL}/zips/twic${week}g.zip`;
+const getTwicZipFilename = (week) => `twic${week}g.zip`;
+const TWIC_ZIP_REGEX = /twic\d+g\.zip/;
+const IPC_CHANNELS = {
+  SELECT_DIRECTORY: "select-directory",
+  DOWNLOAD_TWIC: "download-selected-twic-number",
+  GET_DOWNLOADED_TWICS: "get-downloaded-twic-numbers"
+};
 const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname$1, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
@@ -45,24 +52,24 @@ ipcMain.handle("scraper:fetch-url", async (_event, url) => {
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
   return res.text();
 });
-ipcMain.handle("select-directory", async (_event) => {
+ipcMain.handle(IPC_CHANNELS.SELECT_DIRECTORY, async (_event) => {
   const dir = await dialog.showOpenDialog({
     properties: ["openDirectory"]
   });
   return dir.filePaths[0];
 });
-ipcMain.handle("download-selected-twic-number", async (_event, twicNumber, dir) => {
-  const url = `https://theweekinchess.com/zips/twic${twicNumber}g.zip`;
+ipcMain.handle(IPC_CHANNELS.DOWNLOAD_TWIC, async (_event, twicNumber, dir) => {
+  const url = getTwicDownloadUrl(twicNumber);
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
   const zip = await res.arrayBuffer();
-  const zipPath = path.join(dir, `twic${twicNumber}g.zip`);
+  const zipPath = path.join(dir, getTwicZipFilename(twicNumber));
   fs.writeFileSync(zipPath, Buffer.from(zip));
   return zipPath;
 });
-ipcMain.handle("get-downloaded-twic-numbers", async (_event, dir) => {
+ipcMain.handle(IPC_CHANNELS.GET_DOWNLOADED_TWICS, async (_event, dir) => {
   const files = fs.readdirSync(dir);
-  return files.filter((file) => file.match(/twic\d+g\.zip/)).map((file) => file.replace("twic", "").replace("g.zip", ""));
+  return files.filter((file) => file.match(TWIC_ZIP_REGEX)).map((file) => file.replace("twic", "").replace("g.zip", ""));
 });
 app.whenReady().then(createWindow);
 export {

@@ -1,4 +1,5 @@
 import type { Twic } from '../types'
+import { IPC_CHANNELS, TWIC_LIST_URL } from '../constants'
 
 let cachedTwics: Twic[] | null = null
 
@@ -6,7 +7,7 @@ const getTwics = async (): Promise<Twic[]> => {
   if (cachedTwics) return cachedTwics
 
   try {
-    const htmlText = await window.ipcRenderer.invoke('scraper:fetch-url', 'https://theweekinchess.com/twic')
+    const htmlText = await window.ipcRenderer.invoke(IPC_CHANNELS.FETCH_URL, TWIC_LIST_URL)
     const doc = parseIntoDocument(htmlText)
     const rows = [...doc.getElementsByTagName('tr')]
     // Filter row that has class tabhead or tabhead2 and not empty and has seven cells
