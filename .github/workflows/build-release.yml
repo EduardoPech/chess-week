@@ -82,6 +82,8 @@ jobs:
             - **Windows:** ChessWeek-Windows-${{ steps.vars.outputs.version }}-Setup.exe
             - **Linux:** ChessWeek-Linux-${{ steps.vars.outputs.version }}.AppImage
           files: |
-            release/${{ steps.vars.outputs.version }}/*
+            release/${{ steps.vars.outputs.version }}/*.dmg
+            release/${{ steps.vars.outputs.version }}/*.exe
+            release/${{ steps.vars.outputs.version }}/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
