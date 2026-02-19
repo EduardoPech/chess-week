@@ -45,11 +45,6 @@
     "provider": "github",
     "owner": "eduardopech",
     "repo": "chess-week",
-    "releaseType": "release",
-    "releaseNotes": "Release notes",
-    "releaseNotesFile": "release-notes.md",
-    "releaseNotesTemplate": "Release notes",
-    "releaseNotesTemplateFile": "release-notes.md",
-    "releaseNotesTemplateType": "release",
+    "releaseType": "release"
   },
 }
