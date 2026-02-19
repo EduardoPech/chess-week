@@ -82,6 +82,5 @@ jobs:
             - **Linux:** ChessWeek-Linux-${{ steps.vars.outputs.version }}.AppImage
           files: |
             release/${{ steps.vars.outputs.version }}/*
-          update_existing_release: ${{ steps.vars.outputs.update_existing == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
