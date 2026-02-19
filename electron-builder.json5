@@ -6,7 +6,7 @@
   "productName": "ChessWeek",
   "directories": {
     "output": "release/${version}",
-    "buildResources": "public"
+    "buildResources": "build"
   },
   "files": [
     "dist",
