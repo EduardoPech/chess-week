@@ -42,7 +42,7 @@
     "artifactName": "${productName}-Linux-${version}.${ext}"
   },
   "publish": {
-    "provider": "github"
+    "provider": "github",
     "owner": "eduardopech",
     "repo": "chess-week",
     "releaseType": "release",
