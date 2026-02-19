@@ -40,5 +40,16 @@
       "AppImage"
     ],
     "artifactName": "${productName}-Linux-${version}.${ext}"
-  }
+  },
+  "publish": {
+    "provider": "github"
+    "owner": "eduardopech",
+    "repo": "chess-week",
+    "releaseType": "release",
+    "releaseNotes": "Release notes",
+    "releaseNotesFile": "release-notes.md",
+    "releaseNotesTemplate": "Release notes",
+    "releaseNotesTemplateFile": "release-notes.md",
+    "releaseNotesTemplateType": "release",
+  },
 }
