@@ -52,6 +52,7 @@ jobs:
         with:
           pattern: '*'
           merge-multiple: true
+          path: release
 
       - name: Get version and tag info
         id: vars
