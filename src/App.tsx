@@ -1,38 +1,113 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/electron-vite.animate.svg'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+import OptionsPanel from './components/Options'
+import { getTwics } from './lib/fetchTwics'
 import { Button } from './components/ui/button'
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from './components/ui/card'
+import { downloadSelectedTwicNumber, getDownloadedTwicNumbers } from './lib/twicDownload'
+import { ColumnDef } from "@tanstack/react-table"
+import { columns } from "./components/twics/columns"
+import { DataTable } from './components/twics/data-table'
+import { Badge } from './components/ui/badge'
+import type { Twic } from './types'
+import { FolderSync } from 'lucide-react'
+import Loading from './components/Loading'
+import { Progress } from './components/ui/progress'
+import Logo from './assets/icon.png'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState(0)
+  const [isLoading, setIsLoading] = useState(false)
+  const [directory, setDirectory] = useState('')
+  const [twics, setTwics] = useState<Twic[]>([])
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({})
+  const selectedTwics = useMemo(
+    () => twics.filter((t) => rowSelection[t.week.toString()]),
+    [twics, rowSelection]
+  )
+  const [downloadedTwicNumbers, setDownloadedTwicNumbers] = useState<string[]>([])
+
+  const downloadSelectedTwics = async () => {
+    setIsDownloading(true)
+    setDownloadProgress(0)
+    for (const twic of selectedTwics) {
+      const zipPath = await downloadSelectedTwicNumber(twic.week, directory)
+      if (zipPath) {
+        setDownloadedTwicNumbers((prev) => [...prev, twic.week.toString()])
+        setTwics((prev) => prev.filter((t) => t.week !== twic.week))
+      }
+      setDownloadProgress((prev) => prev + 100 / selectedTwics.length)
+    }
+    setIsDownloading(false)
+    setRowSelection({})
+  }
+
+  useEffect(() => {
+    if (!directory) return
+
+    const loadData = async () => {
+      setIsLoading(true)
+      setRowSelection({})
+      const [allTwics, downloadedNumbers] = await Promise.all([
+        getTwics(),
+        getDownloadedTwicNumbers(directory),
+      ])
+      setDownloadedTwicNumbers(downloadedNumbers)
+      setTwics(allTwics.filter((twic) => !downloadedNumbers.includes(twic.week.toString())))
+      setIsLoading(false)
+    }
+    loadData()
+  }, [directory])
 
   return (
-    <>
-      <div className='flex flex-row items-center justify-center'>
-        <a href="https://electron-vite.github.io" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1 className='text-2xl font-bold'>Vite + React</h1>
-      <div className="flex flex-col items-center justify-center">
-        <button className='bg-blue-500 text-white p-2 rounded-md' onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
+      <div className="container mx-auto py-5">
+        <div className="flex flex-col items-center justify-center">
+          <img src={Logo} alt="Chess Week Synchronizer" className="w-20 h-20" />
+        </div>
+        <h1 className="text-2xl font-bold">
+          Chess Week Synchronizer
+        </h1>
+        <p className="text-sm text-gray-500">
+          Synchronize the Week in Chess (TWIC) games from the Week in Chess website.
         </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-      <div className="flex min-h-svh flex-col items-center justify-center">
-      <Button variant="outline">Click me</Button>
+        <OptionsPanel directory={directory} setDirectory={setDirectory} />
+      { !directory && (
+        <div className="my-10">
+          <h2 className="text-gray-500 text-center py-10 font-bold text-2xl">
+            Select a directory to synchronize the TWICs
+          </h2>
+        </div>
+      )} 
+      { directory && !isLoading && (
+        <div className="flex flex-row gap-4 h-full">
+          <div className="flex-1">
+              <Card>
+                <CardHeader>
+                  <CardTitle>TWICs</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  Available: <Badge>{twics.length}</Badge> <br />
+                  Downloaded: <Badge>{downloadedTwicNumbers.length}</Badge> <br />
+                  Selected: <Badge>{selectedTwics.length}</Badge>
+                </CardContent>
+                <CardFooter className="flex flex-col justify-center gap-4">
+                  {isDownloading &&
+                    <Progress value={downloadProgress} />}
+                  <Button onClick={downloadSelectedTwics} disabled={isDownloading}>
+                    <FolderSync className="size-4" />
+                    {isDownloading ? 'Synchronizing...' : 'Start Synchronization'}
+                  </Button>
+                </CardFooter>
+              </Card>
+          </div>
+          <div className="flex-2">
+          <DataTable columns={columns as ColumnDef<Twic>[]} twics={twics} rowSelection={rowSelection} setRowSelection={setRowSelection} />
+          </div>
+        </div>
+      )}
+      { isLoading && <Loading /> }
     </div>
-    </>
   )
 }
 

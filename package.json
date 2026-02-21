@@ -1,8 +1,31 @@
 {
   "name": "chess-week",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "author": "Eduardo Pech",
+  "license": "MIT",
+  "homepage": "https://github.com/eduardopech/chess-week",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eduardopech/chess-week.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eduardopech/chess-week/issues"
+  },
+  "keywords": [
+    "chess",
+    "week",
+    "synchronizer",
+    "downloader",
+    "twic"
+  ],
+  "contributors": [
+    {
+      "name": "Eduardo Pech",
+      "url": "https://github.com/eduardopech"
+    }
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
@@ -11,9 +34,11 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.563.0",
+    "playwright": "^1.58.2",
     "radix-ui": "^1.4.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -29,6 +54,7 @@
     "@vitejs/plugin-react": "^4.2.1",
     "electron": "^30.0.1",
     "electron-builder": "^24.13.3",
+    "electron-icon-builder": "^2.0.1",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",

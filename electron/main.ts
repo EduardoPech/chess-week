@@ -1,9 +1,14 @@
-import { app, BrowserWindow } from 'electron'
-import { createRequire } from 'node:module'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import fs from 'node:fs'
+import {
+  getTwicDownloadUrl,
+  getTwicZipFilename,
+  IPC_CHANNELS,
+  TWIC_ZIP_REGEX,
+} from '../src/constants'
 
-const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // The built directory structure
@@ -28,10 +33,12 @@ let win: BrowserWindow | null
 
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    icon: path.join(process.env.VITE_PUBLIC, '/icons/icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
+    width: 1200,
+    height: 800,
   })
 
   // Test active push message to Renderer-process.
@@ -63,6 +70,40 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow()
   }
+})
+
+// Fetch URL from main process (no CORS)
+ipcMain.handle('scraper:fetch-url', async (_event, url: string) => {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`)
+  return res.text()
+})
+
+// Select directory
+ipcMain.handle(IPC_CHANNELS.SELECT_DIRECTORY, async (_event) => {
+  const dir = await dialog.showOpenDialog({
+    properties: ['openDirectory']
+  })
+  return dir.filePaths[0]
+})
+
+// Download selected TWIC number
+ipcMain.handle(IPC_CHANNELS.DOWNLOAD_TWIC, async (_event, twicNumber: number, dir: string) => {
+  const url = getTwicDownloadUrl(twicNumber)
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`)
+  const zip = await res.arrayBuffer()
+  const zipPath = path.join(dir, getTwicZipFilename(twicNumber))
+  fs.writeFileSync(zipPath, Buffer.from(zip))
+  return zipPath
+})
+
+// Return a list of twic numbers that are already downloaded
+ipcMain.handle(IPC_CHANNELS.GET_DOWNLOADED_TWICS, async (_event, dir: string) => {
+  const files = fs.readdirSync(dir)
+  return files
+    .filter((file) => file.match(TWIC_ZIP_REGEX))
+    .map((file) => file.replace('twic', '').replace('g.zip', ''))
 })
 
 app.whenReady().then(createWindow)

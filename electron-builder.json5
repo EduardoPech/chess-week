@@ -1,11 +1,12 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "com.github.eduardopech.chess-week",
   "asar": true,
-  "productName": "YourAppName",
+  "productName": "ChessWeek",
   "directories": {
-    "output": "release/${version}"
+    "output": "release/${version}",
+    "buildResources": "build"
   },
   "files": [
     "dist",
@@ -39,5 +40,11 @@
       "AppImage"
     ],
     "artifactName": "${productName}-Linux-${version}.${ext}"
-  }
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "eduardopech",
+    "repo": "chess-week",
+    "releaseType": "release"
+  },
 }
